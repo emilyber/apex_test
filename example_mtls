@@ -1,0 +1,50 @@
+public with sharing class MtlsApiCalloutService {
+
+    public class ApiResponse {
+        public Integer statusCode;
+        public String status;
+        public String responseBody;
+        public String errorMessage;
+    }
+
+    public static ApiResponse requestToken() {
+        ApiResponse result = new ApiResponse();
+        Http http = new Http();
+        HttpRequest req = new HttpRequest();
+
+        try {
+            // URL completa baseada no Named Credential
+            String endpoint = 'callout:API_GTW_Regional/oauth/token';
+
+            // Corpo da requisição
+            String body = 'grant_type=client_credentials&scope=read';
+            
+            req.setEndpoint(endpoint);
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+            req.setBody(body);
+
+            // Logs de preparação
+            System.debug('[MTLS] Iniciando chamada para: ' + endpoint);
+            System.debug('[MTLS] Corpo da requisição: ' + body);
+
+            // Executar chamada
+            HttpResponse res = http.send(req);
+
+            // Logs de resposta
+            result.statusCode = res.getStatusCode();
+            result.status = res.getStatus();
+            result.responseBody = res.getBody();
+
+            System.debug('[MTLS] Código de status: ' + result.statusCode);
+            System.debug('[MTLS] Status: ' + result.status);
+            System.debug('[MTLS] Corpo da resposta: ' + result.responseBody);
+
+        } catch (Exception e) {
+            result.errorMessage = e.getMessage();
+            System.debug('[MTLS][ERRO] Exceção capturada: ' + e.getMessage());
+        }
+
+        return result;
+    }
+}
