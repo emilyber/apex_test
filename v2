@@ -1,0 +1,85 @@
+public with sharing class MtlsApiGatewayService {
+
+    public class TokenResponse {
+        public String access_token;
+        public String token_type;
+        public Integer expires_in;
+    }
+
+    public class ApiResponse {
+        public Integer statusCode;
+        public String status;
+        public String responseBody;
+        public String errorMessage;
+    }
+
+    /**
+     * Realiza chamada para o STS para obter um token OAuth2.
+     */
+    private static TokenResponse getTokenFromSts() {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint('callout:STS_API/oauth/token'); // Named Credential com certificado mTLS
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        String clientId = 'SEU_CLIENT_ID';
+        String clientSecret = 'SEU_CLIENT_SECRET';
+
+        String body = 'grant_type=client_credentials' +
+                      '&client_id=' + EncodingUtil.urlEncode(clientId, 'UTF-8') +
+                      '&client_secret=' + EncodingUtil.urlEncode(clientSecret, 'UTF-8');
+        req.setBody(body);
+
+        System.debug('[STS] Enviando requisição para obter token: ' + body);
+
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+
+        System.debug('[STS] Status: ' + res.getStatusCode());
+        System.debug('[STS] Body: ' + res.getBody());
+
+        if (res.getStatusCode() == 200) {
+            return (TokenResponse) JSON.deserialize(res.getBody(), TokenResponse.class);
+        } else {
+            throw new CalloutException('Erro ao obter token do STS: ' + res.getBody());
+        }
+    }
+
+    /**
+     * Faz chamada GET para o API Gateway usando o token do STS.
+     */
+    public static ApiResponse callApiGateway() {
+        ApiResponse result = new ApiResponse();
+        Http http = new Http();
+        HttpRequest req = new HttpRequest();
+
+        try {
+            TokenResponse token = getTokenFromSts();
+
+            String endpoint = 'callout:API_GTW_Regional/prod/oauth/token'; // Named Credential com mTLS
+            req.setEndpoint(endpoint);
+            req.setMethod('GET');
+            req.setHeader('Content-Type', 'application/json');
+            req.setHeader('Authorization', 'Bearer ' + token.access_token);
+
+            System.debug('[API] Enviando chamada GET para: ' + endpoint);
+            System.debug('[API] Header Authorization: Bearer ' + token.access_token);
+
+            HttpResponse res = http.send(req);
+
+            result.statusCode = res.getStatusCode();
+            result.status = res.getStatus();
+            result.responseBody = res.getBody();
+
+            System.debug('[API] Código de status: ' + result.statusCode);
+            System.debug('[API] Status: ' + result.status);
+            System.debug('[API] Corpo da resposta: ' + result.responseBody);
+
+        } catch (Exception e) {
+            result.errorMessage = e.getMessage();
+            System.debug('[API][ERRO] Exceção capturada: ' + e.getMessage());
+        }
+
+        return result;
+    }
+}
