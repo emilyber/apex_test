@@ -1,0 +1,6 @@
+MtlsApiCalloutService.ApiResponse res = MtlsApiCalloutService.requestToken();
+System.debug('--- Resultado Final do Teste---');
+System.debug('Status: ' + res.status);
+System.debug('Código: ' + res.statusCode);
+System.debug('Resposta: ' + res.responseBody);
+System.debug('Erro: ' + res.errorMessage);
