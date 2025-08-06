@@ -9,3 +9,5 @@ Observabilidade: Datadog, Splunk, Grafana, AppDynamics
 Automação e DevOps: GitHub Actions, Jenkins, CI/CD, FinOps
 Linguagens: Python, JavaScript, Groovy, bash, Java
 Integrações e APIs: Desenvolvimento com foco em reuso e escalabilidade
+
+https://www.linkedin.com/in/emily-berteloni-715549b4/
